@@ -1,6 +1,6 @@
 $(document).ready(function() {
 
-  var dimensions_array = generateRects(20);
+  var dimensions_array = generateRects(10);
 
   packed_array = packRects(dimensions_array);
 
@@ -87,9 +87,10 @@ packRects = function(dimensions_array) {
 
       vertex_array.push(r.v1, r.v2, r.v3, r.v4);
 
-      var usedCorners = [];
+      usedCorners = [];
       // start array of available corners
-      var corners = findCorners(sharedVertex, vertex_array, usedCorners);
+      corners = [];
+      corners = findCorners(sharedVertex, vertex_array, usedCorners);
       // start array of used corners
       usedCorners.push(sharedVertex);
 
@@ -103,9 +104,9 @@ packRects = function(dimensions_array) {
       overlap = true;
 
       var counter = 0;
-      while(overlap) {
-        var nearestCorner = corners[counter];
-        counter++;
+      for (var j=0; j<corners.length; j++) {
+        var nearestCorner = corners[j];
+       // counter++;
 
         //var nearestCorner = findClosestCorner(corners);
 
@@ -114,27 +115,39 @@ packRects = function(dimensions_array) {
         y = nearestCorner.y + height;
         r = new rectangle(x, y, width, height);
         var overlap = checkOverlap(r, rect_array);
-        if (overlap) {
+        if (!overlap) {
+          break;
+        } else {
           // Try quadrant 2
           x = nearestCorner.x - width;
           y = nearestCorner.y + height;
           r = new rectangle(x, y, width, height);
           overlap = checkOverlap(r, rect_array);
-          if (overlap) {
+          if (!overlap) {
+            break;
+          } else {
             // try quadrant 3
             x = nearestCorner.x - width;
             y = nearestCorner.y;
             r = new rectangle(x, y, width, height);
             overlap = checkOverlap(r, rect_array);
-            if (overlap) {
+            if (!overlap) {
+              break;
+            } else {
               // try quadrant 4
               x = nearestCorner.x;
               y = nearestCorner.y;
               r = new rectangle(x, y, width, height);
               overlap = checkOverlap(r, rect_array);
 
-              if (overlap) {
-                console.log('overlappage');
+              if (!overlap) {
+
+
+                break;
+              } else {
+                if (j == corners.length - 1) {
+                  alert('failure');
+                }
 
               }
             }
@@ -142,8 +155,8 @@ packRects = function(dimensions_array) {
         }
 
 
-
       }
+
 
 
 
@@ -152,7 +165,13 @@ packRects = function(dimensions_array) {
 
       // remove this corner from array of available corners
       var index = corners.indexOf(nearestCorner);
-      corners.splice(index, 1);
+
+      console.log('spliced');
+      console.log(corners[index]);
+     // corners.splice(index, 1);
+      console.log('corners after splice');
+      console.log(corners);
+
 
       // add this corner to array of used corners
       usedCorners.push(nearestCorner);
@@ -162,10 +181,15 @@ packRects = function(dimensions_array) {
       vertex_array.push(r.v1, r.v2, r.v3, r.v4);
       var newCorners = findCorners(sharedVertex, vertex_array, usedCorners);
 
+      console.log('pre push');
+      console.log(corners);
       for (var j=0; j<newCorners.length; j++) {
-        corners.push(newCorners[j]);
 
+        corners.push(newCorners[j]);
+        console.log('pushed');
+        console.log(newCorners[j]);
       }
+
 
     }
 
@@ -235,7 +259,7 @@ findSharedVertex = function(rect_array, vertex_array) {
 
 findCorners = function(sharedVertex, vertex_array, usedCorners) {
 
-  var corners = [];
+  new_corners = [];
   var commonX = vertex_array.filter(function(obj) {
     if (obj.x == sharedVertex.x) {
       if (obj.y != sharedVertex.y) {
@@ -250,13 +274,13 @@ findCorners = function(sharedVertex, vertex_array, usedCorners) {
   // If sharedVertex is not between
   if (Math.max(distAB, distXA, distXB) != distAB) {
     if (Math.min(distXA, distXB) == distXA) {
-      corners.push(commonX[0]);
-      var thisCorner = corners[corners.length -1];
+      new_corners.push(commonX[0]);
+      var thisCorner = new_corners[new_corners.length -1];
       thisCorner.convex = 5;
       thisCorner.distance = getDistance(thisCorner);
     } else {
-      corners.push(commonX[1]);
-      var thisCorner = corners[corners.length -1];
+      new_corners.push(commonX[1]);
+      var thisCorner = new_corners[new_corners.length -1];
       thisCorner.convex = 5;
       thisCorner.distance = getDistance(thisCorner);
     }
@@ -282,6 +306,10 @@ findCorners = function(sharedVertex, vertex_array, usedCorners) {
     }
   });
 
+  if (commonY.length < 2) {
+    alert(commonY);
+  }
+
 
   var distAB = Math.abs(commonY[0].x - commonY[1].x);
   var distXA = Math.abs(commonY[0].x - sharedVertex.x);
@@ -289,18 +317,18 @@ findCorners = function(sharedVertex, vertex_array, usedCorners) {
   // If sharedVertex is not between
   if (Math.max(distAB, distXA, distXB) != distAB) {
     if (Math.min(distXA, distXB) == distXA) {
-      corners.push(commonY[0]);
-      var thisCorner = corners[corners.length -1];
+      new_corners.push(commonY[0]);
+      var thisCorner = new_corners[new_corners.length -1];
       thisCorner.convex = 4;
       thisCorner.distance = getDistance(thisCorner);
     } else {
-      corners.push(commonY[1]);
-      var thisCorner = corners[corners.length -1];
+      new_corners.push(commonY[1]);
+      var thisCorner = new_corners[new_corners.length -1];
       thisCorner.convex = 1;
       thisCorner.distance = getDistance(thisCorner);
     }
   }
-  return corners;
+  return new_corners;
 
 }
 
@@ -331,6 +359,7 @@ sortByDistance = function(vertex_array) {
 
 convertCoords = function(rect_array_in, renderer_width, renderer_height) {
   var rect_array = jQuery.extend(true, [], rect_array_in);
+  var scale = 0.5;
   for (var i=0; i<rect_array.length; i++) {
     var r = rect_array[i];
     r.x = (r.x / renderer_width) * renderer_width + renderer_width / 2;
@@ -340,6 +369,13 @@ convertCoords = function(rect_array_in, renderer_width, renderer_height) {
   return rect_array;
 }
 
+convertVertex = function(x, y, renderer_width, renderer_height) {
+  var scale = 0.5;
+  var new_x = x / renderer_width * renderer_width + renderer_width / 2;
+  var new_y = - y / renderer_height * renderer_height + renderer_height / 2;
+  return [new_x, new_y];
+}
+
 drawPixi = function(rect_array) {
   renderer = new PIXI.WebGLRenderer($(window).width(), $(window).height());
   document.body.appendChild(renderer.view);
@@ -347,6 +383,7 @@ drawPixi = function(rect_array) {
   var graphics = new PIXI.Graphics();
 
   graphics.lineStyle(2, 0xFFFF00);
+  graphics.beginFill(0x1099bb);
 //  graphics.beginFill(0xFFFF00);
 
   var x_origin = renderer.width / 2;
@@ -363,10 +400,31 @@ drawPixi = function(rect_array) {
 
   for (var i=0; i<rect_array.length; i++) {
     var r = rect_array[i];
-    graphics.beginFill(0x1099bb);
+
    //graphics.lineStyle(2, 0x1099bb);
     graphics.drawRect(r.x, r.y, r.width, r.height);
+  //  graphics.drawCircle(r.x, r.y, 6);
   }
+
+  console.log('corners final');
+  console.log(corners);
+  for (var j=0; j<corners.length; j++) {
+    graphics.beginFill(0x5D0776);
+    var converted = convertVertex(corners[j].x, corners[j].y, renderer.width, renderer.height);
+
+
+    graphics.drawCircle(converted[0], converted[1], 6);
+
+  }
+
+
+  for (var j=0; j<usedCorners.length; j++) {
+    graphics.beginFill(0xEC8A49);
+    var converted = convertVertex(usedCorners[j].x, usedCorners[j].y, renderer.width, renderer.height);
+  //  graphics.drawCircle(converted[0], converted[1], 6);
+
+  }
+
 
   //graphics.drawRect(rect_array[0].x, rect_array[0].y, rect_array[0].width, rect_array[0].height);
 
